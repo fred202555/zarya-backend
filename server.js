@@ -15,7 +15,7 @@ app.use(express.json());
 
 const upload = multer({ dest: 'uploads/' });
 
-app.post('/transcribe', upload.single('audio'), async (req, res) => {
+app.post('/transcribe', upload.single('file'), async (req, res) => {
   try {
     const transcript = await transcribeAudio(req.file.path);
     fs.unlinkSync(req.file.path);
