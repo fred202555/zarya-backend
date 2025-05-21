@@ -1,9 +1,11 @@
 import express from 'express';
 import multer from 'multer';
 import cors from 'cors';
-import { transcribeAudio } from './whisper.js';
+import { transcribeAudio } from './whisper_openai.js';
 import { generateResponse } from './zarya_openai.js';
 import { synthesizeSpeech } from './tts.js';
+import path from 'path';
+import fs from 'fs';
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -15,8 +17,9 @@ const upload = multer({ dest: 'uploads/' });
 
 app.post('/transcribe', upload.single('audio'), async (req, res) => {
   try {
-    const text = await transcribeAudio(req.file.path);
-    res.json({ transcript: text });
+    const transcript = await transcribeAudio(req.file.path);
+    fs.unlinkSync(req.file.path);
+    res.json({ transcript });
   } catch (err) {
     console.error(err);
     res.status(500).send('Erreur transcription');
@@ -37,7 +40,7 @@ app.post('/zarya', async (req, res) => {
 app.post('/speak', async (req, res) => {
   try {
     const filePath = await synthesizeSpeech(req.body.text);
-    res.sendFile(filePath);
+    res.sendFile(path.resolve(filePath));
   } catch (err) {
     console.error(err);
     res.status(500).send('Erreur TTS');
